@@ -31,6 +31,7 @@ async fn main() {
 
         Commands::Stop => {
             // stop
+            tracker::session::stop_session(&pool).await;
             println!("Stopping session!");
         }
     }

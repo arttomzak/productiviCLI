@@ -45,3 +45,30 @@ pub async fn start_session(pool: &sqlx::PgPool, task_name: &str) {
 
     println!("Wrote session start for: {}", task_name);
 }
+
+pub async fn stop_session(pool: &sqlx::PgPool) {
+    let session = sqlx::query!(
+        "SELECT id FROM sessions WHERE ended_at IS NULL",
+    )
+    .fetch_optional(pool)
+    .await
+    .expect("Db error yo");
+
+    match session {
+        Some(s) => {
+            sqlx::query!(
+                "UPDATE sessions SET ended_at = NOW(), duration_secs = EXTRACT(EPOCH FROM NOW() - started_at) WHERE id = $1",
+                s.id
+                
+            )
+            .execute(pool)
+            .await
+            .expect("Couldn't write into sessions table");
+        },
+        None => println!("no session active!"),
+    };
+
+    println!("end to session written successfully!");
+
+
+}
