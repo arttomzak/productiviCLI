@@ -15,7 +15,7 @@ async fn main() {
     // rust has object ownership, IF I PASS AN OBJECT INTO A FUNCTION AS IS, you move ownership into the func
     // now if you use an & you don't take the ownership, just look at it kinda like a C style amp
     // & references an object
-    let _pool = db::client::connect(&database_url).await;
+    let pool = db::client::connect(&database_url).await;
 
     println!("we connected yo");
     // this is our super switch statement, which is exhaustive -> we gotta consider all commands
@@ -25,6 +25,7 @@ async fn main() {
     match args.command { 
         Commands::Start { task } => {
             // start TASKNAME
+            tracker::session::start_session(&pool, &task).await;
             println!("Tracking your {} session", task)
         }
 
