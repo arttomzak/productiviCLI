@@ -171,3 +171,94 @@ mod tracker;
 ```
 
 `::` navigates into modules — `db::client::connect()` means the `connect` function inside `client.rs` inside the `db` module.
+
+---
+
+## Attributes (`#[...]`)
+
+`#[...]` is how you attach metadata or instructions to structs, functions, or fields. The compiler or a library reads them at compile time and acts on them.
+
+```rust
+#[tokio::main]          // "run this as an async entry point"
+#[derive(Debug)]        // "auto-implement the Debug trait"
+#[command(subcommand)]  // "treat this field as a subcommand" (clap)
+```
+
+Think of it like a decorator in Python or an annotation in Java — it changes behavior without being part of the logic itself.
+
+---
+
+## Enums
+
+A type that can be exactly one of several variants. Used with clap to define CLI subcommands.
+
+```rust
+pub enum Commands {
+    Start { task: String },  // productivicli start "coding"
+    Stop,                    // productivicli stop
+}
+```
+
+Each variant can optionally hold data. `Start` holds a `task` string, `Stop` holds nothing.
+
+---
+
+## Traits vs Attribute Options — Capitalization Matters
+
+`Subcommand` (capital S) is a **trait** you derive on an enum:
+```rust
+#[derive(Subcommand)]
+pub enum Commands { ... }
+```
+
+`subcommand` (lowercase) is a **clap attribute option** that marks a field as holding a subcommand:
+```rust
+#[command(subcommand)]
+pub command: Commands,
+```
+
+Same word, two different things. Capitalization tells them apart.
+
+---
+
+## `use`
+
+Imports items from a crate or module so you can use them without the full path.
+
+```rust
+use clap::{Parser, Subcommand};
+// now you can write Parser instead of clap::Parser
+```
+
+---
+
+## Why `mod` exists
+
+Rust does not automatically include every file in your project. You have to explicitly declare what exists with `mod`. Without it, Rust ignores the file entirely — no error, it just doesn't exist to the compiler.
+
+```rust
+mod cli;      // "src/cli/mod.rs exists, pull it in"
+mod db;       // "src/db/mod.rs exists, pull it in"
+mod config;   // "src/config.rs exists, pull it in"
+```
+
+`mod` is short for **module** — a named container for related code. Other languages call these packages, namespaces, or directories. Rust calls them modules.
+
+The folder structure mirrors the module tree:
+```
+mod cli        → src/cli/mod.rs
+mod db         → src/db/mod.rs
+mod tracker    → src/tracker/mod.rs
+mod config     → src/config.rs
+```
+
+Rust infers the file path from the module name — no explicit paths needed like in JavaScript.
+
+## `pub mod` vs `pub use`
+
+```rust
+pub mod commands;      // "commands.rs exists, include it as a submodule"
+pub use commands::Cli; // "re-export Cli so outside code can use it as cli::Cli"
+```
+
+`pub mod` makes a submodule visible. `pub use` re-exports something from inside that submodule so callers don't have to dig into it themselves.
