@@ -309,3 +309,72 @@ use crate::cli::commands::Commands;    // bring in something from your own proje
 ```
 
 Items from traits (like `.parse()` from `Parser`) only work if the trait is in scope. If you get "method not found", check if you need a `use` statement for the trait.
+
+---
+
+## `sqlx::query!` vs `sqlx::query`
+
+`query!` with the `!` is a macro — at compile time it connects to your database and validates your SQL. Typos in column names or wrong types won't compile. Always prefer this.
+
+`query` without `!` runs SQL at runtime with no compile time checks.
+
+---
+
+## fetch methods
+
+How many rows you expect back determines which fetch method to use:
+
+```
+fetch_one       → expect exactly one row, crash if none found
+fetch_optional  → expect zero or one row, returns Option<Row>
+fetch_all       → return all matching rows as a Vec
+execute         → don't expect rows back (INSERT, UPDATE, DELETE)
+```
+
+---
+
+## SQL — `IS NULL` not `= NULL`
+
+In SQL you cannot use `=` to check for null. Always use `IS NULL`:
+
+```sql
+WHERE ended_at IS NULL    ✓
+WHERE ended_at = NULL     ✗  (never matches)
+```
+
+---
+
+## SQL — `UPDATE` vs `INSERT`
+
+- `INSERT` creates a new row
+- `UPDATE` modifies an existing row
+
+When stopping a session you're updating the existing row, not creating a new one:
+
+```sql
+UPDATE sessions SET ended_at = NOW(), duration_secs = ... WHERE id = $1
+```
+
+---
+
+## Doing math in SQL vs Rust
+
+When working with timestamps, it's cleaner to let PostgreSQL do the calculation than to pull data into Rust and calculate there:
+
+```sql
+EXTRACT(EPOCH FROM NOW() - started_at)
+```
+
+This gives you the duration in seconds directly in the query. No need to handle it in Rust.
+
+---
+
+## Prepared statements and SQL injection
+
+Never build SQL strings by concatenating user input. Always use `$1`, `$2` placeholders:
+
+```rust
+sqlx::query!("SELECT * FROM tasks WHERE name = $1", task_name)
+```
+
+This keeps SQL and data separate, preventing SQL injection attacks.
