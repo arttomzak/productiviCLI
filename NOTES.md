@@ -262,3 +262,50 @@ pub use commands::Cli; // "re-export Cli so outside code can use it as cli::Cli"
 ```
 
 `pub mod` makes a submodule visible. `pub use` re-exports something from inside that submodule so callers don't have to dig into it themselves.
+
+---
+
+## `crate::` — the project root
+
+`crate::` means "start from the root of this project." Use it when Rust can't find something with a relative path.
+
+```rust
+use crate::cli::commands::Commands;
+// start at root → go into cli → go into commands → bring in Commands
+```
+
+Without `crate::` Rust looks relative to the current file, which may not find what you need.
+
+---
+
+## `match`
+
+Pattern matching — like a `switch` statement but exhaustive and more powerful. Rust forces you to handle every possible variant. If you miss one, your code won't compile.
+
+```rust
+match args.command {
+    Commands::Start { task } => {
+        // runs when user typed "start <task>"
+        // task is automatically extracted and available here
+    }
+    Commands::Stop => {
+        // runs when user typed "stop"
+    }
+}
+```
+
+The `{ task }` part is **destructuring** — pulling a field out of an enum variant directly in the match arm so you can use it as a plain variable inside the block.
+
+---
+
+## Imports (`use`)
+
+Bring items into scope so you don't need to write the full path every time.
+
+```rust
+use clap::Parser;                      // bring in a single item
+use clap::{Parser, Subcommand};        // bring in multiple items at once
+use crate::cli::commands::Commands;    // bring in something from your own project
+```
+
+Items from traits (like `.parse()` from `Parser`) only work if the trait is in scope. If you get "method not found", check if you need a `use` statement for the trait.
