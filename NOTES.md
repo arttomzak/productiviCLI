@@ -378,3 +378,74 @@ sqlx::query!("SELECT * FROM tasks WHERE name = $1", task_name)
 ```
 
 This keeps SQL and data separate, preventing SQL injection attacks.
+
+---
+
+# Docker Notes
+
+---
+
+## What is Docker?
+
+Docker lets you run software in isolated containers — self-contained environments that include everything the software needs to run. Instead of installing PostgreSQL directly on your machine, you run it in a container. If you wipe your machine, you just spin the container back up.
+
+---
+
+## What is docker-compose?
+
+A tool that lets you define how to run one or more containers in a `docker-compose.yml` file. Instead of a long `docker run` command with many flags, you write the config once and use simple commands to manage it.
+
+```bash
+docker-compose up -d    # start containers in the background
+docker-compose down     # stop and remove containers
+docker-compose ps       # see running containers from this file
+```
+
+---
+
+## docker-compose.yml structure
+
+```yaml
+services:
+  postgres:
+    image: postgres:17          # which Docker image to use
+    restart: unless-stopped     # auto-restart if it crashes
+    environment:                # env vars passed into the container
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypass
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"             # host:container port mapping
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # persist data outside container
+
+volumes:
+  postgres_data:                # named volume — survives container deletion
+```
+
+**ports** — `"5432:5432"` means port 5432 on your machine maps to port 5432 inside the container. Without this your app can't reach the container.
+
+**volumes** — by default all data inside a container is lost when it's deleted. A named volume stores the data on your actual machine so it survives.
+
+---
+
+## Useful Docker commands
+
+```bash
+docker ps                          # list all running containers
+docker-compose up -d               # start containers in background
+docker-compose down                # stop containers
+docker exec -it <container> bash   # open a shell inside a container
+docker exec -it <container> psql -U <user> -d <db>  # connect to postgres inside container
+```
+
+---
+
+## Docker on Arch Linux — gotchas
+
+- Docker needs `iptables` running. Arch ships with `nftables` by default and `iptables` is disabled.
+  - Fix: `sudo systemctl enable iptables && sudo systemctl start iptables`
+- If the Docker daemon hangs on start, restart it after enabling iptables: `sudo systemctl restart docker`
+- Your user needs to be in the `docker` group to run Docker without `sudo`:
+  - `sudo usermod -aG docker $USER`
+  - Run `newgrp docker` to apply immediately without logging out
