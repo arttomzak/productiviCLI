@@ -70,5 +70,31 @@ pub async fn stop_session(pool: &sqlx::PgPool) {
 
     println!("end to session written successfully!");
 
-
 }
+
+// eventually wanna migrate to having it constantly show how long the current task has been running for but the work here will be useful
+pub async fn session_session(pool: &sqlx::PgPool) {
+    let session = sqlx::query!(
+        "SELECT id FROM sessions WHERE ended_at IS NULL",
+    )
+    .fetch_optional(pool)
+    .await
+    .expect("Db error yo");
+
+    match session {
+        Some(s) => {
+            let cur_duration = s.duration_secs // have to calculate this
+            println!("Tracking {} for {}", s.task_name, s.time), 
+        },
+        None => {
+            println!("No session active!"),
+        }
+    };
+}
+
+pub async fn day_sessions(pool: &sqlx::PgPool) {
+    let sessions = sqlx::query!(
+        "SELECT"
+    )
+}
+

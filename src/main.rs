@@ -34,6 +34,13 @@ async fn main() {
             tracker::session::stop_session(&pool).await;
             println!("Stopping session!");
         }
+
+        Commands::Status => {
+            // status
+            tracker::session:status_session(&pool).await;
+            println!("status");
+        }
+
     }
 }
 
