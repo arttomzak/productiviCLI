@@ -9,7 +9,6 @@ use clap::Parser;
 
 #[tokio::main]
 async fn main() {
-    
     let database_url = config::load(); // note that variables in rust are immutable by default!
     let args = cli::Cli::parse();
 
@@ -23,7 +22,7 @@ async fn main() {
 
     // match takes a value and checks which pattern it fits in after Cli::parse()
     // takes what we typed and pulls out a command as defined within cli commands
-    match args.command { 
+    match args.command {
         Some(Commands::Start { task }) => {
             // start TASKNAME
             tracker::session::start_session(&pool, &task).await;
@@ -39,7 +38,5 @@ async fn main() {
         None => {
             tui::run(&pool).await;
         }
-
     }
 }
-

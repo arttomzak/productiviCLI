@@ -3,5 +3,7 @@
 
 pub async fn connect(database_url: &str) -> sqlx::PgPool {
     // returns the postgresql conection pool, and if we don't get that we print that error message
-    sqlx::PgPool::connect(database_url).await.expect("failure to connect yo")
+    sqlx::PgPool::connect(database_url)
+        .await
+        .expect("failure to connect yo")
 }
