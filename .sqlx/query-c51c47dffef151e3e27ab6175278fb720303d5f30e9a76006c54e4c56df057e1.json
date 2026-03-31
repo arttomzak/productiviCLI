@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sessions (task_id, started_at) VALUES ($1, NOW())",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c51c47dffef151e3e27ab6175278fb720303d5f30e9a76006c54e4c56df057e1"
+}

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sessions SET ended_at = NOW(), duration_secs = EXTRACT(EPOCH FROM NOW() - started_at) WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a333b62a0d66ebe158d4c86dd7b26d550b817db212d442bfb8c642365139542c"
+}
