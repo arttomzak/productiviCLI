@@ -22,13 +22,18 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
 
     let mut input = String::new();
     let mut active_session = tracker::session::get_active_session(pool).await;
+    let mut daily_summary = tracker::session::get_daily_summary(pool).await;
 
     // event loop prompting us for actions
     loop {
         terminal.draw(|f| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints([Constraint::Min(1), Constraint::Length(3)])
+                .constraints([
+                    Constraint::Length(3),
+                    Constraint::Min(1),
+                    Constraint::Length(3),
+                ])
                 .split(f.area());
 
             let status_text = match &active_session {
@@ -53,9 +58,27 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
             );
             f.render_widget(status_block, chunks[0]);
 
+            let summary_text = daily_summary
+                .iter()
+                .map(|(name, total_secs)| {
+                    let hours = total_secs / 3600;
+                    let mins = (total_secs % 3600) / 60;
+                    format!("{:<20} {}h {}m", name, hours, mins)
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
+
+            let summary_block = Paragraph::new(if summary_text.is_empty() {
+                String::from("No sessions today")
+            } else {
+                summary_text
+            })
+            .block(Block::default().title("Today").borders(Borders::ALL));
+            f.render_widget(summary_block, chunks[1]);
+
             let input_widget = Paragraph::new(format!("> {}", input))
                 .block(Block::default().title("Command").borders(Borders::ALL));
-            f.render_widget(input_widget, chunks[1]);
+            f.render_widget(input_widget, chunks[2]);
         })?;
 
         if event::poll(std::time::Duration::from_millis(250))? {
@@ -79,6 +102,7 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
                         }
 
                         active_session = tracker::session::get_active_session(pool).await;
+                        daily_summary = tracker::session::get_daily_summary(pool).await;
                     }
 
                     _ => {} // catch all for random shit

@@ -85,28 +85,20 @@ pub async fn get_active_session(
     row.map(|r| (r.name, r.started_at)) // if theres a val in r, transform it
 }
 
-// // eventually wanna migrate to having it constantly show how long the current task has been running for but the work here will be useful
-// pub async fn session_session(pool: &sqlx::PgPool) {
-//     let session = sqlx::query!(
-//         "SELECT id FROM sessions WHERE ended_at IS NULL",
-//     )
-//     .fetch_optional(pool)
-//     .await
-//     .expect("Db error yo");
+pub async fn get_daily_summary(pool: &sqlx::PgPool) -> Vec<(String, i64)> {
+    let rows = sqlx::query!( 
+        "SELECT tasks.name, SUM(sessions.duration_secs)::bigint as total_secs
+        FROM sessions
+        JOIN tasks ON tasks.id = sessions.task_id
+        WHERE sessions.ended_at IS NOT NULL
+        AND DATE(sessions.started_at) = CURRENT_DATE
+        GROUP BY tasks.name
+        ORDER BY total_secs DESC"
+    )
+    .fetch_all(pool)
+    .await
+    .expect("db error yo");
 
-//     match session {
-//         Some(s) => {
-//             let cur_duration = s.duration_secs // have to calculate this
-//             println!("Tracking {} for {}", s.task_name, s.time),
-//         },
-//         None => {
-//             println!("No session active!"),
-//         }
-//     };
-// }
-
-// pub async fn day_sessions(pool: &sqlx::PgPool) {
-//     let sessions = sqlx::query!(
-//         "SELECT"
-//     )
-// }
+    rows.iter().map(|r| (r.name.clone(), r.total_secs.unwrap_or(0))).collect() // no semicolon
+                                                                               // returns
+}

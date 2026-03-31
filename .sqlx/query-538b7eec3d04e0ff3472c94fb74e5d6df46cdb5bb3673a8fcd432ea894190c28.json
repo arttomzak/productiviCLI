@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT tasks.name, SUM(sessions.duration_secs)::bigint as total_secs\n        FROM sessions\n        JOIN tasks ON tasks.id = sessions.task_id\n        WHERE sessions.ended_at IS NOT NULL\n        AND DATE(sessions.started_at) = CURRENT_DATE\n        GROUP BY tasks.name\n        ORDER BY total_secs DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "total_secs",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "538b7eec3d04e0ff3472c94fb74e5d6df46cdb5bb3673a8fcd432ea894190c28"
+}
