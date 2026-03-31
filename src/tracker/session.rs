@@ -72,6 +72,21 @@ pub async fn stop_session(pool: &sqlx::PgPool) {
 
 }
 
+pub async fn get_active_session(pool: &sqlx::PgPool) -> Option<(String, chrono::DateTime<chrono::Utc>)> {
+    let row = sqlx::query!(
+        "SELECT tasks.name, sessions.started_at
+        FROM sessions
+        JOIN tasks on tasks.id = sessions.task_id
+        WHERE sessions.ended_at IS NULL"
+    ) // the join lets us grab .name and .started_at
+    .fetch_optional(pool)
+    .await
+    .expect("db error yo");
+
+    row.map(|r| (r.name, r.started_at)) // if theres a val in r, transform it
+}
+
+
 // // eventually wanna migrate to having it constantly show how long the current task has been running for but the work here will be useful
 // pub async fn session_session(pool: &sqlx::PgPool) {
 //     let session = sqlx::query!(

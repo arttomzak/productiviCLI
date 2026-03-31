@@ -22,6 +22,7 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
     let mut terminal = Terminal::new(backend)?;
 
     let mut input = String::new();
+    let mut active_session = tracker::session::get_active_session(pool).await;
 
     // event loop prompting us for actions
     loop {
@@ -34,9 +35,23 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
                 ])
                 .split(f.area());
 
-            let status_block = Block::default()
-                .title("productiviCLI")
-                .borders(Borders::ALL);
+            let status_text = match &active_session {
+                Some((name, started_at)) => {
+                    let time_elapsed = chrono::Utc::now() - *started_at; // c style deref since
+                                                                         // active_session is
+                                                                         // behind a & reference
+                                                                        
+                    let secs = time_elapsed.num_seconds();
+                    let hours = secs / 3600;
+                    let mins = (secs % 3600) / 60;
+                    let seconds = secs % 60;
+                    format!("Tracking: {} | {}h {}m {}s", name, hours, mins, seconds)
+                }
+                None => String::from("No active session"),
+            };
+
+            let status_block = Paragraph::new(status_text)
+                .block(Block::default().title("productiviCLI").borders(Borders::ALL));
             f.render_widget(status_block, chunks[0]);
 
             let input_widget = Paragraph::new(format!("> {}", input))
@@ -53,7 +68,7 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
                     KeyCode::Enter => {
                         let command = input.trim().to_string();
                         input.clear();
-                    
+
                         if command.starts_with("start ") {
                             let task = command.strip_prefix("start ").unwrap_or("").trim();
                             tracker::session::start_session(pool, task).await;
@@ -61,6 +76,7 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
                             tracker::session::stop_session(pool).await;
                         }
 
+                        active_session = tracker::session::get_active_session(pool).await;
                     }
 
                     _ => {} // catch all for random shit
