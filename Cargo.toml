@@ -1,11 +1,11 @@
 [package]
 name = "productivicli"
 version = "0.1.0"
-edition = "2026"
+edition = "2021"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }                                                                                                                                                                 
-sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "chrono"] }                                                                                                                                  
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "chrono", "tls-rustls"] }                                                                                                                                  
 tokio = { version = "1", features = ["full"] }                                                                                                                                                                  
 serde = { version = "1", features = ["derive"] }                                                                                                                                                                
 chrono = { version = "0.4", features = ["serde"] }                                                                                                                                                              

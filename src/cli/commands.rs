@@ -19,9 +19,9 @@ pub struct Cli { // container that holds what command the user types
 pub enum Commands {
     Start { task: String },
     Stop,
-    Status, // check what's running and for how long if at all
-    Day, // day and down we are querying all tasks and displaying them in hour format prolly.
-    Week,
-    Month,
-    Lifetime, 
+    // Status, // check what's running and for how long if at all
+    // Day, // day and down we are querying all tasks and displaying them in hour format prolly.
+    // Week,
+    // Month,
+    // Lifetime, 
 }
