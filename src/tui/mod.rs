@@ -1,13 +1,17 @@
 use crossterm::{
-    execute, 
+    execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     event::{self, Event, KeyCode},
 };
 use ratatui::{
     backend::CrosstermBackend,
     Terminal,
+    widgets::{Block, Borders, Paragraph},
+    layout::{Layout, Constraint, Direction},
 };
 use std::io;
+use crate::tracker;
+
 
 pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
     enable_raw_mode()?; // raw mode rather than cooked mode, doesn't require an enter at the end for everything
@@ -17,17 +21,50 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
     let backend = CrosstermBackend::new(stdout); // talks from ratatui to terminal
     let mut terminal = Terminal::new(backend)?;
 
+    let mut input = String::new();
 
     // event loop prompting us for actions
     loop {
         terminal.draw(|f| {
-            // ascii art here i assume
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    Constraint::Min(1),
+                    Constraint::Length(3),
+                ])
+                .split(f.area());
+
+            let status_block = Block::default()
+                .title("productiviCLI")
+                .borders(Borders::ALL);
+            f.render_widget(status_block, chunks[0]);
+
+            let input_widget = Paragraph::new(format!("> {}", input))
+                .block(Block::default().title("Command").borders(Borders::ALL));
+            f.render_widget(input_widget, chunks[1]);
         })?;
 
         if event::poll(std::time::Duration::from_millis(250))? { // checks every 250 ms for an input
             if let Event::Key(key) = event::read()? {
-                if key.code == KeyCode::Char('q') {
-                    break;
+                match key.code {
+                    KeyCode::Char('q') => break,
+                    KeyCode::Char(c) => input.push(c),
+                    KeyCode::Backspace => { input.pop(); },
+                    KeyCode::Enter => {
+                        let command = input.trim().to_string();
+                        input.clear();
+                    
+                        if command.starts_with("start ") {
+                            let task = command.strip_prefix("start ").unwrap_or("").trim();
+                            tracker::session::start_session(pool, task).await;
+                        } else if command == "stop" {
+                            tracker::session::stop_session(pool).await;
+                        }
+
+                    }
+
+                    _ => {} // catch all for random shit
+
                 }
             }
         }

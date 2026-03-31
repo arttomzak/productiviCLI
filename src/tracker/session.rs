@@ -43,7 +43,7 @@ pub async fn start_session(pool: &sqlx::PgPool, task_name: &str) {
     .await
     .expect("Couldn't write into sessions table");
 
-    println!("Wrote session start for: {}", task_name);
+    // println!("Wrote session start for: {}", task_name);
 }
 
 pub async fn stop_session(pool: &sqlx::PgPool) {
@@ -68,7 +68,7 @@ pub async fn stop_session(pool: &sqlx::PgPool) {
         None => println!("no session active!"),
     };
 
-    println!("end to session written successfully!");
+    // println!("end to session written successfully!");
 
 }
 

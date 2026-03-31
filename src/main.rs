@@ -27,13 +27,13 @@ async fn main() {
         Some(Commands::Start { task }) => {
             // start TASKNAME
             tracker::session::start_session(&pool, &task).await;
-            println!("Tracking your {} session", task)
+            // println!("Tracking your {} session", task)
         }
 
         Some(Commands::Stop) => {
             // stop
             tracker::session::stop_session(&pool).await;
-            println!("Stopping session!");
+            // println!("Stopping session!");
         }
 
         None => {

@@ -441,6 +441,133 @@ docker exec -it <container> psql -U <user> -d <db>  # connect to postgres inside
 
 ---
 
+---
+
+# TUI Notes
+
+---
+
+## What is a TUI?
+
+A Terminal User Interface — a program that takes over the terminal window and renders a live, interactive UI rather than printing output and exiting. Examples: Vim, htop, lazygit.
+
+Built with `ratatui` (layout and drawing) and `crossterm` (raw terminal input and screen control).
+
+---
+
+## Cooked mode vs Raw mode
+
+**Cooked mode** (normal terminal behavior):
+- Keystrokes are buffered until you press Enter
+- The terminal handles backspace, Ctrl+C, etc.
+
+**Raw mode** (what TUIs use):
+- Every keypress is sent to your app immediately, no buffering
+- Your app handles backspace, Enter, Ctrl+C itself
+- Enables instant reactions to keypresses without waiting for Enter
+
+```rust
+enable_raw_mode()?;   // enter raw mode
+disable_raw_mode()?;  // restore normal mode on exit
+```
+
+---
+
+## Alternate Screen
+
+A second terminal buffer. Your TUI renders into it, and when you exit, the previous terminal content is restored cleanly.
+
+```rust
+execute!(stdout, EnterAlternateScreen)?;  // switch to alternate screen
+execute!(terminal.backend_mut(), LeaveAlternateScreen)?;  // restore on exit
+```
+
+Without `LeaveAlternateScreen` your terminal looks broken after the app exits.
+
+---
+
+## The TUI event loop
+
+A TUI runs a loop forever — draw, wait for input, update state, repeat:
+
+```rust
+loop {
+    terminal.draw(|f| {
+        // render current state to the screen
+    })?;
+
+    if event::poll(std::time::Duration::from_millis(250))? {
+        if let Event::Key(key) = event::read()? {
+            if key.code == KeyCode::Char('q') {
+                break;
+            }
+        }
+    }
+}
+```
+
+- `terminal.draw` renders one frame
+- `event::poll` checks for a keypress without blocking — the loop keeps running even with no input
+- `event::read` gets the actual keypress when one is ready
+- `break` exits the loop, after which you clean up and return
+
+---
+
+## ratatui vs crossterm
+
+- **crossterm** — the engine. Talks directly to the terminal: raw mode, alternate screen, reading keypresses, cursor control.
+- **ratatui** — the UI layer. Handles layouts, widgets, drawing boxes and text. Uses crossterm as its backend.
+
+```rust
+let backend = CrosstermBackend::new(stdout);  // bridge between ratatui and crossterm
+let mut terminal = Terminal::new(backend)?;   // the object you draw frames with
+```
+
+---
+
+## Handling input in a TUI
+
+Single-key shortcuts (like `q` to quit) act immediately — no Enter needed.
+
+For typed commands (like `start rust-learning`), you build up the input character by character in a buffer, then act on it when `KeyCode::Enter` is detected. Raw mode gives you both — instant shortcuts AND Enter-to-submit input.
+
+---
+
+## Cleanup matters
+
+Always restore the terminal before exiting. If a panic happens before cleanup, the terminal is left in raw mode and looks broken.
+
+```rust
+disable_raw_mode()?;
+execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+Ok(())
+```
+
+---
+
+## Making a subcommand optional
+
+To launch the TUI when no subcommand is given, wrap the `Commands` type in `Option`:
+
+```rust
+pub struct Cli {
+    #[command(subcommand)]
+    pub command: Option<Commands>,
+}
+```
+
+Then match on `Some(...)` / `None`:
+
+```rust
+match args.command {
+    Some(Commands::Start { task }) => { ... }
+    Some(Commands::Stop) => { ... }
+    None => { tui::run(&pool).await; }  // no subcommand → launch TUI
+}
+```
+
+---
+
 ## Docker on Arch Linux — gotchas
 
 - Docker needs `iptables` running. Arch ships with `nftables` by default and `iptables` is disabled.
