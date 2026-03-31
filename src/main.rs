@@ -2,6 +2,7 @@ mod cli;
 mod config;
 mod db;
 mod tracker;
+mod tui;
 
 use crate::cli::commands::Commands;
 use clap::Parser;
@@ -23,23 +24,21 @@ async fn main() {
     // match takes a value and checks which pattern it fits in after Cli::parse()
     // takes what we typed and pulls out a command as defined within cli commands
     match args.command { 
-        Commands::Start { task } => {
+        Some(Commands::Start { task }) => {
             // start TASKNAME
             tracker::session::start_session(&pool, &task).await;
             println!("Tracking your {} session", task)
         }
 
-        Commands::Stop => {
+        Some(Commands::Stop) => {
             // stop
             tracker::session::stop_session(&pool).await;
             println!("Stopping session!");
         }
 
-        // Commands::Status => {
-        //     // status
-        //     tracker::session:status_session(&pool).await;
-        //     println!("status");
-        // }
+        None => {
+            tui::run(&pool).await;
+        }
 
     }
 }

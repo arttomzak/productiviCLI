@@ -12,7 +12,7 @@ use clap::{Parser, Subcommand};
 #[command(name = "productivicli", about = "Track your productivity in a CLI (your productiviCLI :) )")]
 pub struct Cli { // container that holds what command the user types
     #[command(subcommand)] // tells us yo command isn't a flag, but its a subcommand that is start or stop
-    pub command: Commands,
+    pub command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
