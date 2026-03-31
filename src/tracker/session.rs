@@ -86,7 +86,7 @@ pub async fn get_active_session(
 }
 
 pub async fn get_daily_summary(pool: &sqlx::PgPool) -> Vec<(String, i64)> {
-    let rows = sqlx::query!( 
+    let rows = sqlx::query!(
         "SELECT tasks.name, SUM(sessions.duration_secs)::bigint as total_secs
         FROM sessions
         JOIN tasks ON tasks.id = sessions.task_id
@@ -99,6 +99,8 @@ pub async fn get_daily_summary(pool: &sqlx::PgPool) -> Vec<(String, i64)> {
     .await
     .expect("db error yo");
 
-    rows.iter().map(|r| (r.name.clone(), r.total_secs.unwrap_or(0))).collect() // no semicolon
-                                                                               // returns
+    rows.iter()
+        .map(|r| (r.name.clone(), r.total_secs.unwrap_or(0)))
+        .collect() // no semicolon
+                   // returns
 }
