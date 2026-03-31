@@ -18,26 +18,33 @@ cargo check
 
 ## Database Setup
 
-The app requires a running PostgreSQL instance via Docker. From the project root:
+The database is hosted on **Neon** (cloud Postgres). Docker is no longer used for the database.
+
+Connection is configured via `DATABASE_URL` in a `.env` file. Use the **direct (non-pooled)** connection string from Neon — the pooled URL causes prepared statement errors during `sqlx` compile-time query checking.
+
+Migrations must be applied manually. Run each file using `psql` with the direct connection URL:
 
 ```bash
-docker-compose up -d
+psql "$DATABASE_URL" < migrations/001_create_tasks.sql
+psql "$DATABASE_URL" < migrations/002_create_sessions.sql
 ```
 
-Connection is configured via `DATABASE_URL` in a `.env` file (see `.env.example`).
-
-Migrations must be applied manually — there is no migration runner yet. Run each file in order:
-
-```bash
-docker exec -i productivicli-postgres-1 psql -U productivicli -d productividb < migrations/001_create_tasks.sql
-docker exec -i productivicli-postgres-1 psql -U productivicli -d productividb < migrations/002_create_sessions.sql
-```
+Alternatively, run them directly from the Neon dashboard SQL editor.
 
 `sqlx` uses compile-time query checking, so `DATABASE_URL` must be set and the schema must exist before the project will compile.
 
 ## Project Vision
 
-A CLI productivity tracker where the user can run commands at any time to track work sessions on named tasks. Long-term goal is to move the database to a hosted/deployed instance and build a web dashboard that pulls session data to visualize productivity insights.
+A CLI productivity tracker where the user can run commands at any time to track work sessions on named tasks.
+
+**Deployment direction:**
+- Database is already hosted on Neon (cloud Postgres), accessible from any machine
+- Next step: self-host Postgres on a VPS (e.g. Hetzner) when time allows — Neon is a stepping stone
+- Eventually add a REST API backend and a React web dashboard for productivity insights
+
+**Long-term UI direction:**
+- Replace the plain CLI output with a **TUI** (Terminal User Interface) using `ratatui`
+- Goal is a live terminal view with session timer, recent session table, and stats — always running in a terminal window rather than one-shot commands
 
 ## Architecture
 
