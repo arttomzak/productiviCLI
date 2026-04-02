@@ -86,7 +86,8 @@ pub async fn get_active_session(
     row.map(|r| (r.name, r.started_at)) // if theres a val in r, transform it
 }
 
-pub async fn get_daily_summary(pool: &sqlx::PgPool) -> Vec<(String, i64)> { // from 6am today to 6am tmr just bc i work late into night sometimes
+pub async fn get_daily_summary(pool: &sqlx::PgPool) -> Vec<(String, i64)> {
+    // from 6am today to 6am tmr just bc i work late into night sometimes
     let rows = sqlx::query!(
         "SELECT tasks.name, SUM(sessions.duration_secs)::bigint as total_secs
         FROM sessions
@@ -107,7 +108,8 @@ pub async fn get_daily_summary(pool: &sqlx::PgPool) -> Vec<(String, i64)> { // f
                    // returns
 }
 
-pub async fn get_weekly_summary(pool: &sqlx::PgPool) -> Vec<(String, i64)> { // monday 6am to next monday 6am, chicago time
+pub async fn get_weekly_summary(pool: &sqlx::PgPool) -> Vec<(String, i64)> {
+    // monday 6am to next monday 6am, chicago time
     let rows = sqlx::query!(
         "SELECT tasks.name, SUM(sessions.duration_secs)::bigint as total_secs
         FROM sessions

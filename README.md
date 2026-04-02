@@ -4,27 +4,20 @@ productiviCLI is a simple CLI tool that lets you track your time spent
 on anything!
 
 This tool currently writes session data to a postgreSQL database that I 
-personally run within a docker container locally, however I plan to 
-deploy a database for any of my devices to be able to connect to down
-the road, and create a cool little waybar module that shows you the name 
-of the task you're tracking along with the current running time!
+personally have deployed through Neon, and runs in a TUI that showcases
+the task that you're currently tracking, and a daily/weekly summary.
 
-Also in the plans is a simple dashboard hooked up to said deployed database
-showcasing some cool queries based on your data
-
-Even further in the future I'd like to allow others to either write to my deployed
-database with accounts on the website or be able to hook up their own databases
-to the website to run the same queries on their data
-
+Down the line I want to create a little waybar module that will display a
+the time spent on your current task and click into the tui
 
 # Installation
 
 Clone the repository
 
-Run the migrations within migrations/ within your docker container
-to replicate the postgreSQL database.
+Run the migrations within migrations/ and replicate the schema within your postgreSQL database.
 
-Create an .env file mimicking the format within .env.example for the DB link
-(if running your database locally on a docker container) 
+Create an .env file and add your database url 
 
-Bang!
+run cargo run and you're good to go!
+
+
