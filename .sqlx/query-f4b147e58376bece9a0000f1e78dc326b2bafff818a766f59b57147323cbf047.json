@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT tasks.name, SUM(sessions.duration_secs)::bigint as total_secs\n        FROM sessions\n        JOIN tasks ON tasks.id = sessions.task_id\n        WHERE sessions.ended_at IS NOT NULL\n        AND sessions.started_at >= (DATE_TRUNC('day', (NOW() AT TIME ZONE 'America/Chicago') - INTERVAL '6 hours') + INTERVAL '6 hours') AT TIME ZONE 'America/Chicago'\n        AND sessions.started_at < (DATE_TRUNC('day', (NOW() AT TIME ZONE 'America/Chicago') - INTERVAL '6 hours') + INTERVAL '30 hours') AT TIME ZONE 'America/Chicago'\n        GROUP BY tasks.name\n        ORDER BY total_secs DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "total_secs",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "f4b147e58376bece9a0000f1e78dc326b2bafff818a766f59b57147323cbf047"
+}

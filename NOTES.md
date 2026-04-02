@@ -568,6 +568,147 @@ match args.command {
 
 ---
 
+---
+
+## Tuples
+
+A tuple groups multiple values of different types without needing a struct. Access fields by index with `.0`, `.1`, etc.
+
+```rust
+let pair: (String, i64) = (String::from("rust-learning"), 3600);
+pair.0 // "rust-learning"
+pair.1 // 3600
+```
+
+Used in `get_active_session` and `get_daily_summary` to return multiple values from a function without defining a new struct.
+
+---
+
+## Vec
+
+A growable list of values of the same type. `Vec<T>` means a vector containing items of type `T`.
+
+```rust
+let rows: Vec<(String, i64)> = vec![];
+```
+
+`.iter()` loops over references to each item. `.collect()` gathers an iterator back into a `Vec`.
+
+---
+
+## Iterator methods: `.map()`, `.collect()`, `.join()`
+
+Chain these to transform collections without writing explicit loops:
+
+```rust
+daily_summary
+    .iter()
+    .map(|(name, secs)| format!("{} {}s", name, secs))  // transform each item
+    .collect::<Vec<_>>()                                  // gather into a Vec
+    .join("\n")                                           // join into one String
+```
+
+- `.map()` — transform each item into something else
+- `.collect()` — pull the iterator back into a collection
+- `.join()` — combine a Vec of strings into one string with a separator
+
+---
+
+## Option `.map()`
+
+`.map()` on an `Option` transforms the value inside if it exists, without unwrapping:
+
+```rust
+row.map(|r| (r.name, r.started_at))
+// Some(r) → Some((r.name, r.started_at))
+// None    → None
+```
+
+Equivalent to writing a full match but more concise.
+
+---
+
+## SQL `SUM` and casting
+
+`SUM()` in Postgres returns `NUMERIC` by default, which sqlx doesn't map to Rust's `i64`. Cast it explicitly:
+
+```sql
+SUM(sessions.duration_secs)::bigint as total_secs
+```
+
+The `::bigint` cast tells Postgres to return a plain integer that sqlx can map to `i64`.
+
+---
+
+## SQL `JOIN`
+
+Combines rows from two tables based on a related column:
+
+```sql
+SELECT tasks.name, sessions.started_at
+FROM sessions
+JOIN tasks ON tasks.id = sessions.task_id
+WHERE sessions.ended_at IS NULL
+```
+
+`JOIN tasks ON tasks.id = sessions.task_id` means: for each session row, find the matching task row where the ids align. Without the JOIN you'd only have access to columns from one table.
+
+---
+
+## sqlx Offline Mode
+
+By default sqlx connects to your database at compile time to validate queries. Offline mode caches that metadata locally so compilation works without a live database.
+
+```bash
+cargo sqlx prepare   # run after adding/changing any sqlx::query! calls
+```
+
+This writes to a `.sqlx/` folder which gets committed to git. CI then sets `SQLX_OFFLINE=true` to use the cache instead of a real connection.
+
+---
+
+## `if/else` is an expression
+
+In Rust, `if/else` evaluates to a value — it's an expression, not a statement. This means you can use it anywhere a value is expected, including directly as a function argument.
+
+```rust
+Paragraph::new(if summary_text.is_empty() {
+    String::from("No sessions today")
+} else {
+    summary_text
+})
+```
+
+Both branches must return the same type. This replaces the need for a ternary operator (`condition ? a : b`) like in JavaScript. The no-semicolon rule applies here too — the last expression in each branch is the value the block evaluates to.
+
+---
+
+## `#[allow(dead_code)]`
+
+Rust warns when you define a struct that's never constructed. If the struct is intentional (like a schema reference), silence the warning with:
+
+```rust
+#[allow(dead_code)]
+#[derive(Debug, sqlx::FromRow)]
+pub struct Session { ... }
+```
+
+This is fine for structs that document the shape of a database row even if you never build one directly in code.
+
+---
+
+## `let _ = ...` — ignoring a Result
+
+If a function returns `Result` but you intentionally don't want to handle it, assign it to `_`:
+
+```rust
+let _ = tui::run(&pool).await;
+```
+
+Without this, Rust warns `unused Result that must be used`. The `_` tells the compiler you explicitly chose to discard it.
+
+---
+
 ## Docker on Arch Linux — gotchas
 
 - Docker needs `iptables` running. Arch ships with `nftables` by default and `iptables` is disabled.

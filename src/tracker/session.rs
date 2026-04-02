@@ -2,6 +2,7 @@
 // Holds start time, end time, duration, and associated task
 
 #[derive(Debug, sqlx::FromRow)]
+#[allow(dead_code)]
 pub struct Session {
     id: i32,
     task_id: i32,
@@ -85,13 +86,14 @@ pub async fn get_active_session(
     row.map(|r| (r.name, r.started_at)) // if theres a val in r, transform it
 }
 
-pub async fn get_daily_summary(pool: &sqlx::PgPool) -> Vec<(String, i64)> {
+pub async fn get_daily_summary(pool: &sqlx::PgPool) -> Vec<(String, i64)> { // from 6am today to 6am tmr just bc i work late into night sometimes
     let rows = sqlx::query!(
         "SELECT tasks.name, SUM(sessions.duration_secs)::bigint as total_secs
         FROM sessions
         JOIN tasks ON tasks.id = sessions.task_id
         WHERE sessions.ended_at IS NOT NULL
-        AND DATE(sessions.started_at) = CURRENT_DATE
+        AND sessions.started_at >= (DATE_TRUNC('day', (NOW() AT TIME ZONE 'America/Chicago') - INTERVAL '6 hours') + INTERVAL '6 hours') AT TIME ZONE 'America/Chicago'
+        AND sessions.started_at < (DATE_TRUNC('day', (NOW() AT TIME ZONE 'America/Chicago') - INTERVAL '6 hours') + INTERVAL '30 hours') AT TIME ZONE 'America/Chicago'
         GROUP BY tasks.name
         ORDER BY total_secs DESC"
     )
@@ -103,4 +105,24 @@ pub async fn get_daily_summary(pool: &sqlx::PgPool) -> Vec<(String, i64)> {
         .map(|r| (r.name.clone(), r.total_secs.unwrap_or(0)))
         .collect() // no semicolon
                    // returns
+}
+
+pub async fn get_weekly_summary(pool: &sqlx::PgPool) -> Vec<(String, i64)> { // monday 6am to next monday 6am, chicago time
+    let rows = sqlx::query!(
+        "SELECT tasks.name, SUM(sessions.duration_secs)::bigint as total_secs
+        FROM sessions
+        JOIN tasks ON tasks.id = sessions.task_id
+        WHERE sessions.ended_at IS NOT NULL
+        AND sessions.started_at >= (DATE_TRUNC('week', (NOW() AT TIME ZONE 'America/Chicago') - INTERVAL '6 hours') + INTERVAL '6 hours') AT TIME ZONE 'America/Chicago'
+        AND sessions.started_at < (DATE_TRUNC('week', (NOW() AT TIME ZONE 'America/Chicago') - INTERVAL '6 hours') + INTERVAL '7 days 6 hours') AT TIME ZONE 'America/Chicago'
+        GROUP BY tasks.name
+        ORDER BY total_secs DESC"
+    )
+    .fetch_all(pool)
+    .await
+    .expect("db error yo");
+
+    rows.iter()
+        .map(|r| (r.name.clone(), r.total_secs.unwrap_or(0)))
+        .collect()
 }

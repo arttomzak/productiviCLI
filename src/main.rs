@@ -36,7 +36,7 @@ async fn main() {
         }
 
         None => {
-            tui::run(&pool).await;
+            let _ = tui::run(&pool).await;
         }
     }
 }

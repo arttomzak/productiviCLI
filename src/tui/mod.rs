@@ -23,6 +23,7 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
     let mut input = String::new();
     let mut active_session = tracker::session::get_active_session(pool).await;
     let mut daily_summary = tracker::session::get_daily_summary(pool).await;
+    let mut weekly_summary = tracker::session::get_weekly_summary(pool).await;
 
     // event loop prompting us for actions
     loop {
@@ -31,6 +32,7 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
                 .direction(Direction::Vertical)
                 .constraints([
                     Constraint::Length(3),
+                    Constraint::Min(1),
                     Constraint::Min(1),
                     Constraint::Length(3),
                 ])
@@ -76,9 +78,27 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
             .block(Block::default().title("Today").borders(Borders::ALL));
             f.render_widget(summary_block, chunks[1]);
 
+            let weekly_text = weekly_summary
+                .iter()
+                .map(|(name, total_secs)| {
+                    let hours = total_secs / 3600;
+                    let mins = (total_secs % 3600) / 60;
+                    format!("{:<20} {}h {}m", name, hours, mins)
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
+
+            let weekly_block = Paragraph::new(if weekly_text.is_empty() {
+                String::from("No sessions this week")
+            } else {
+                weekly_text
+            })
+            .block(Block::default().title("This Week").borders(Borders::ALL));
+            f.render_widget(weekly_block, chunks[2]);
+
             let input_widget = Paragraph::new(format!("> {}", input))
                 .block(Block::default().title("Command").borders(Borders::ALL));
-            f.render_widget(input_widget, chunks[2]);
+            f.render_widget(input_widget, chunks[3]);
         })?;
 
         if event::poll(std::time::Duration::from_millis(250))? {
@@ -103,6 +123,7 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
 
                         active_session = tracker::session::get_active_session(pool).await;
                         daily_summary = tracker::session::get_daily_summary(pool).await;
+                        weekly_summary = tracker::session::get_weekly_summary(pool).await;
                     }
 
                     _ => {} // catch all for random shit

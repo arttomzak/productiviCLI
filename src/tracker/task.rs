@@ -4,6 +4,7 @@
 // derive - a macro that makes traits for the struct
 //
 #[derive(Debug, sqlx::FromRow)]
+#[allow(dead_code)]
 pub struct Task {
     id: i32,
     name: String,
