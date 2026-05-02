@@ -72,7 +72,7 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
             if !summary_lines.is_empty() {
                 let total_h = daily_total_secs / 3600;
                 let total_m = (daily_total_secs % 3600) / 60;
-                summary_lines.push(format!("\n{}h {:02}m of deep work today!", total_h, total_m));
+                summary_lines.push(format!("\n{}h {}m of deep work today!", total_h, total_m));
             }
             let summary_text = summary_lines.join("\n");
 
@@ -96,7 +96,7 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
             if !weekly_lines.is_empty() {
                 let total_h = weekly_total_secs / 3600;
                 let total_m = (weekly_total_secs % 3600) / 60;
-                weekly_lines.push(format!("\n{}h {:02}m of deep work this week!", total_h, total_m));
+                weekly_lines.push(format!("\n{}h {}m of deep work this week!", total_h, total_m));
             }
             let weekly_text = weekly_lines.join("\n");
 
