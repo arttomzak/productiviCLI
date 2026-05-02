@@ -60,15 +60,21 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
             );
             f.render_widget(status_block, chunks[0]);
 
-            let summary_text = daily_summary
+            let daily_total_secs: i64 = daily_summary.iter().map(|(_, s)| s).sum();
+            let mut summary_lines = daily_summary
                 .iter()
                 .map(|(name, total_secs)| {
                     let hours = total_secs / 3600;
                     let mins = (total_secs % 3600) / 60;
                     format!("{:<20} {}h {}m", name, hours, mins)
                 })
-                .collect::<Vec<_>>()
-                .join("\n");
+                .collect::<Vec<_>>();
+            if !summary_lines.is_empty() {
+                let total_h = daily_total_secs / 3600;
+                let total_m = (daily_total_secs % 3600) / 60;
+                summary_lines.push(format!("\n{}h {:02}m of deep work today!", total_h, total_m));
+            }
+            let summary_text = summary_lines.join("\n");
 
             let summary_block = Paragraph::new(if summary_text.is_empty() {
                 String::from("No sessions today")
@@ -78,15 +84,21 @@ pub async fn run(pool: &sqlx::PgPool) -> io::Result<()> {
             .block(Block::default().title("Today").borders(Borders::ALL));
             f.render_widget(summary_block, chunks[1]);
 
-            let weekly_text = weekly_summary
+            let weekly_total_secs: i64 = weekly_summary.iter().map(|(_, s)| s).sum();
+            let mut weekly_lines = weekly_summary
                 .iter()
                 .map(|(name, total_secs)| {
                     let hours = total_secs / 3600;
                     let mins = (total_secs % 3600) / 60;
                     format!("{:<20} {}h {}m", name, hours, mins)
                 })
-                .collect::<Vec<_>>()
-                .join("\n");
+                .collect::<Vec<_>>();
+            if !weekly_lines.is_empty() {
+                let total_h = weekly_total_secs / 3600;
+                let total_m = (weekly_total_secs % 3600) / 60;
+                weekly_lines.push(format!("\n{}h {:02}m of deep work this week!", total_h, total_m));
+            }
+            let weekly_text = weekly_lines.join("\n");
 
             let weekly_block = Paragraph::new(if weekly_text.is_empty() {
                 String::from("No sessions this week")
