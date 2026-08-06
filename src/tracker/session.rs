@@ -37,13 +37,17 @@ pub async fn start_session(pool: &sqlx::PgPool, task_name: &str) {
         }
     };
 
-    sqlx::query!(
-        "INSERT INTO sessions (task_id, started_at) VALUES ($1, NOW())",
+    // RETURNING started_at so the waybar state file uses the DB's clock, not the
+    // local one -- otherwise the two can drift by a second or two
+    let row = sqlx::query!(
+        "INSERT INTO sessions (task_id, started_at) VALUES ($1, NOW()) RETURNING started_at",
         task_id
     )
-    .execute(pool)
+    .fetch_one(pool)
     .await
     .expect("Couldn't write into sessions table");
+
+    crate::tracker::state::write_active(task_name, row.started_at);
 
     // println!("Wrote session start for: {}", task_name);
 }
@@ -63,6 +67,8 @@ pub async fn stop_session(pool: &sqlx::PgPool) {
             .execute(pool)
             .await
             .expect("Couldn't write into sessions table");
+
+            crate::tracker::state::clear_active();
         }
         None => println!("no session active!"),
     };
