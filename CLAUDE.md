@@ -111,4 +111,4 @@ Workflow file: `.github/workflows/ci.yml`
 
 ## Working Style
 
-The user is actively learning Rust. Take things slow, explain concepts before writing code, and let them ask questions at each step. Key learnings are tracked in `NOTES.md`.
+The user is actively learning Rust. Take things slow, explain concepts before writing code, and let them ask questions at each step. Key learnings are tracked in `docs/NOTES.md`.

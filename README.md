@@ -20,4 +20,9 @@ Create an .env file and add your database url
 
 run cargo run and you're good to go!
 
+# Docs
+
+- [docs/rofi-launcher.md](docs/rofi-launcher.md) — make the app searchable in rofi and open in its own terminal window
+- [docs/NOTES.md](docs/NOTES.md) — Rust learning notes
+
 
